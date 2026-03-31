@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Allergen Checker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+:root{--bg:#0c0e14;--bg2:#10131a;--bg3:#1a1d27;--border:#1e2230;--border2:#2a2f3d;--gold:#c9a96e;--gold-dk:#8b6914;--text:#c8c0b0;--text-hi:#e8dcc8;--muted:#666;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;min-height:100vh;}
+header{background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40;}
+.hd{max-width:700px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px;}
+.logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--gold-dk),var(--gold));display:flex;align-items:center;justify-content:center;color:var(--bg);font-family:'Cormorant Garamond',serif;font-weight:600;font-size:16px;flex-shrink:0;}
+.logo-t .t1{color:var(--text-hi);font-size:13px;letter-spacing:.1em;}
+.logo-t .t2{color:var(--muted);font-size:10px;letter-spacing:.12em;}
+nav{border-top:1px solid var(--bg3);display:flex;max-width:700px;margin:0 auto;}
+nav button{flex:1;padding:10px 0;font-size:12px;background:none;border:none;color:var(--muted);cursor:pointer;position:relative;font-family:'Noto Sans JP',sans-serif;transition:color .2s;}
+nav button.on{color:var(--gold);}
+nav button.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
+main{max-width:700px;margin:0 auto;padding:16px 16px 60px;}
+.tab{display:none;} .tab.on{display:block;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+.lbl{font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;}
+select,input,textarea{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text-hi);border-radius:8px;padding:10px 12px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+textarea{resize:vertical;min-height:80px;}
+
+/* ── prod-btn: divベースに変更（iOS Safari <button>幅崩れ対策）── */
+#prod-btns{
+display:block;
+width:100%;
+}
+.prod-btn{
+display:flex;
+flex-direction:row;
+align-items:center;
+gap:12px;
+width:100%;
+max-width:100%;
+padding:12px;
+background:var(–bg);
+border:1px solid var(–border2);
+border-radius:8px;
+margin-bottom:8px;
+cursor:pointer;
+transition:border-color .15s,background .15s;
+box-sizing:border-box;
+overflow:hidden;
+}
+.prod-btn.sel{background:rgba(201,169,110,.08);border-color:var(–gold);}
+.prod-btn .chk{
+width:22px;
+height:22px;
+min-width:22px;
+flex-shrink:0;
+border-radius:5px;
+border:2px solid var(–border2);
+display:flex;
+align-items:center;
+justify-content:center;
+transition:background .15s,border-color .15s;
+}
+.prod-btn.sel .chk{background:var(–gold);border-color:var(–gold);}
+.prod-btn .chk svg{display:none;}
+.prod-btn.sel .chk svg{display:block;}
+.prod-btn .pname{
+font-size:13px;
+color:var(–text-hi);
+line-height:1.4;
+flex:1 1 0%;
+min-width:0;
+overflow:hidden;
+word-break:break-word;
+}
+/* ─────────────────────────────────────────────────────────── */
+
+.abox{margin-top:10px;padding:10px 12px;background:var(–bg);border:1px solid var(–border);border-radius:8px;}
+.abox .al{font-size:10px;color:var(–muted);margin-bottom:4px;}
+.abox .av{font-size:13px;color:var(–text-hi);}
+.btn-gold{background:linear-gradient(135deg,var(–gold-dk),var(–gold));color:var(–bg);font-weight:500;border:none;border-radius:10px;padding:13px 24px;font-size:14px;cursor:pointer;width:100%;font-family:‘Noto Sans JP’,sans-serif;transition:opacity .2s;}
+.btn-gold:disabled{opacity:.3;cursor:not-allowed;}
+.btn-ghost{background:none;border:1px solid var(–border2);color:var(–muted);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;}
+.btn-add{background:var(–bg3);border:1px solid var(–border2);color:var(–text);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;}
+.btn-sm{font-size:11px;padding:4px 10px;border-radius:6px;background:none;border:none;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500;border:1px solid;white-space:nowrap;}
+.badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.r-HIGH{background:rgba(127,29,29,.5);border-color:#ef4444;color:#fca5a5;} .r-HIGH .badge-dot{background:#f87171;}
+.r-MEDIUM{background:rgba(120,53,15,.4);border-color:#f59e0b;color:#fcd34d;} .r-MEDIUM .badge-dot{background:#fbbf24;}
+.r-LOW{background:rgba(113,63,18,.35);border-color:#ca8a04;color:#fde68a;} .r-LOW .badge-dot{background:#facc15;}
+.r-SAFE{background:rgba(6,78,59,.35);border-color:#059669;color:#6ee7b7;} .r-SAFE .badge-dot{background:#34d399;}
+.res-card{border-radius:12px;border:1px solid;padding:16px;margin-bottom:12px;}
+.res-card.HIGH{background:rgba(127,29,29,.3);border-color:#ef4444;}
+.res-card.MEDIUM{background:rgba(120,53,15,.25);border-color:#f59e0b;}
+.res-card.LOW{background:rgba(113,63,18,.2);border-color:#ca8a04;}
+.res-card.SAFE{background:rgba(6,78,59,.2);border-color:#059669;}
+.res-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap;}
+.res-hd .pn{font-weight:500;color:var(–text-hi);}
+.flag-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.flag-name{font-family:monospace;color:var(–text-hi);background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;font-size:11px;}
+.flag-reason{color:#aaa;font-size:12px;flex:1;min-width:180px;}
+.res-sum{font-size:11px;color:#666;border-top:1px solid rgba(255,255,255,.05);padding-top:8px;margin-top:8px;}
+.overall{background:var(–bg2);border:1px solid var(–border2);border-radius:12px;padding:16px;}
+.overall .ol{font-size:10px;color:var(–gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;}
+.overall p{font-size:13px;color:var(–text);line-height:1.7;}
+.apibar{background:var(–bg3);border:1px solid var(–border2);border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+.apibar summary{font-size:11px;color:var(–muted);cursor:pointer;}
+.apibar .inner{margin-top:10px;display:flex;gap:8px;}
+.apibar input{flex:1;font-family:monospace;font-size:12px;}
+.apibar .sv{background:var(–bg3);border:1px solid var(–gold);color:var(–gold);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:‘Noto Sans JP’,sans-serif;}
+.apibar .hint{font-size:10px;color:#555;margin-top:8px;}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(12,14,20,.5);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:8px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.err{background:rgba(127,29,29,.4);border:1px solid #ef4444;border-radius:10px;padding:12px 14px;color:#fca5a5;font-size:13px;margin-top:12px;}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sec-hd h2{font-size:11px;color:var(–gold);letter-spacing:.15em;text-transform:uppercase;}
+.list-item{background:var(–bg2);border:1px solid var(–border);border-radius:10px;padding:14px;margin-bottom:10px;}
+.li-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.li-name{font-weight:500;color:var(–text-hi);margin-bottom:4px;}
+.li-sub{font-size:11px;color:var(–muted);font-family:monospace;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.li-acts{display:flex;gap:2px;flex-shrink:0;}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:flex-end;justify-content:center;}
+.modal{background:var(–bg2);border:1px solid var(–border2);border-radius:16px 16px 0 0;width:100%;max-width:500px;padding:20px;max-height:85vh;overflow-y:auto;}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-title{font-size:15px;color:var(–text-hi);}
+.modal-x{background:none;border:none;color:var(–muted);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+.mf{margin-bottom:14px;}
+.mf label{display:block;font-size:10px;color:var(–gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.mf .hint{font-size:10px;color:#444;margin-top:4px;}
+.ma{display:flex;gap:10px;margin-top:18px;}
+.ma .btn-gold{flex:1;}
+.stitle{font-size:10px;color:var(–gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(–border);display:flex;align-items:center;gap:8px;}
+.stitle span{color:var(–muted);font-size:12px;letter-spacing:0;}
+.notice{background:rgba(201,169,110,.07);border:1px solid rgba(201,169,110,.2);border-radius:8px;padding:8px 12px;font-size:11px;color:#888;margin-bottom:12px;}
+</style>
+
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="logo">A</div>
+    <div class="logo-t">
+      <div class="t1">ALLERGEN CHECKER</div>
+      <div class="t2">エステサロン成分照合システム</div>
+    </div>
+  </div>
+  <nav>
+    <button class="on" onclick="switchTab('check')">⚗ 照合</button>
+    <button onclick="switchTab('products')">◈ 化粧品</button>
+    <button onclick="switchTab('clients')">◎ カルテ</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 照合 -->
+  <div id="tab-check" class="tab on">
+    <details class="apibar" id="apibar">
+      <summary>▶ ⚙ Claude APIキー設定（AI照合を使う場合）</summary>
+      <div class="inner">
+        <input type="password" id="apikey-input" placeholder="sk-ant-..." autocomplete="off">
+        <button class="sv" onclick="saveApiKey()">保存</button>
+      </div>
+      <div class="hint">APIキーなしでも「キーワード照合モード」で動作します。キーはブラウザのlocalStorageに保存されます（端末外には送信されません）。</div>
+    </details>
+
+```
+<div class="card">
+  <div class="lbl">顧客を選択</div>
+  <select id="sel-client" onchange="onClientChange()">
+    <option value="">— 顧客を選んでください —</option>
+  </select>
+  <div id="abox" style="display:none" class="abox">
+    <div class="al">申告アレルギー・注意事項</div>
+    <div class="av" id="atext"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="lbl">使用化粧品を選択（タップで選択）</div>
+  <div id="prod-btns"></div>
+</div>
+
+<button class="btn-gold" id="check-btn" onclick="runCheck()" disabled>⚗ アレルゲン照合を実行</button>
+<div id="result-area" style="margin-top:20px;"></div>
+```
+
+  </div>
+
+  <!-- 化粧品 -->
+
+  <div id="tab-products" class="tab">
+    <div id="storage-notice-p" class="notice" style="display:none">⚠ このブラウザではデータの保存ができません。登録した内容はページを閉じると消えます。</div>
+    <div class="sec-hd">
+      <h2>化粧品マスター <span id="pcnt"></span></h2>
+      <button class="btn-add" onclick="openProductModal()">＋ 新規登録</button>
+    </div>
+    <div id="plist"></div>
+  </div>
+
+  <!-- カルテ -->
+
+  <div id="tab-clients" class="tab">
+    <div id="storage-notice-c" class="notice" style="display:none">⚠ このブラウザではデータの保存ができません。登録した内容はページを閉じると消えます。</div>
+    <div class="sec-hd">
+      <h2>顧客カルテ <span id="ccnt"></span></h2>
+      <button class="btn-add" onclick="openClientModal()">＋ 新規登録</button>
+    </div>
+    <div id="clist"></div>
+  </div>
+</main>
+
+<!-- 化粧品モーダル -->
+
+<div class="modal-ov" id="pm" style="display:none" onclick="bgClose(event,'pm')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="pm-title">化粧品を登録</div>
+      <button class="modal-x" onclick="closeM('pm')">×</button>
+    </div>
+    <div class="mf"><label>商品名</label><input id="pm-name" placeholder="例：モイスチャーエッセンスC"></div>
+    <div class="mf">
+      <label>全成分（パッケージ表示をそのまま貼り付け）</label>
+      <textarea id="pm-ings" placeholder="Water, Glycerin, Niacinamide, ...&#10;英語・日本語どちらでも可"></textarea>
+      <div class="hint">カンマ区切りでも改行区切りでもOK</div>
+    </div>
+    <input type="hidden" id="pm-id">
+    <div class="ma">
+      <button class="btn-gold" onclick="saveProduct()">保存</button>
+      <button class="btn-ghost" onclick="closeM('pm')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- 顧客モーダル -->
+
+<div class="modal-ov" id="cm" style="display:none" onclick="bgClose(event,'cm')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="cm-title">顧客を登録</div>
+      <button class="modal-x" onclick="closeM('cm')">×</button>
+    </div>
+    <div class="mf"><label>氏名</label><input id="cm-name" placeholder="例：山田 花子"></div>
+    <div class="mf">
+      <label>アレルギー・過敏症・注意事項</label>
+      <textarea id="cm-alg" placeholder="例：パラベン類、合成香料&#10;自由記述でOK"></textarea>
+      <div class="hint">自由記述でOK。AIが文脈を読み取って照合します。</div>
+    </div>
+    <input type="hidden" id="cm-id">
+    <div class="ma">
+      <button class="btn-gold" onclick="saveClient()">保存</button>
+      <button class="btn-ghost" onclick="closeM('cm')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── localStorage wrapper
+let storageAvailable = false;
+(function(){
+  try {
+    const t = '__test__';
+    localStorage.setItem(t, t);
+    localStorage.removeItem(t);
+    storageAvailable = true;
+  } catch(e) {
+    storageAvailable = false;
+  }
+})();
+
+function lsGet(key) {
+  if (!storageAvailable) return null;
+  try { return localStorage.getItem(key); } catch(e) { return null; }
+}
+function lsSet(key, val) {
+  if (!storageAvailable) return;
+  try { localStorage.setItem(key, val); } catch(e) {}
+}
+function lsRemove(key) {
+  if (!storageAvailable) return;
+  try { localStorage.removeItem(key); } catch(e) {}
+}
+
+// ── サンプルデータ
+const SP=[
+  {id:'p1',name:'モイスチャーエッセンスC',ingredients:'Water, Glycerin, Niacinamide, Sodium Hyaluronate, Methylparaben, Propylparaben, Fragrance, Ethylhexylglycerin, Phenoxyethanol, Citric Acid, Tocopherol'},
+  {id:'p2',name:'カーミングマスク〈敏感肌用〉',ingredients:'水, グリセリン, ブチレングリコール, ヒアルロン酸Na, カミツレ花エキス, ラベンダー油, リナロール, ゲラニオール, クエン酸, カルボマー, 水酸化Na'},
+  {id:'p3',name:'ピールオフパック',ingredients:'Water, Alcohol, PVA, Propylene Glycol, Salicylic Acid, Menthol, Eucalyptus Oil, Phenoxyethanol, Methylparaben'},
+];
+const SC=[
+  {id:'c1',name:'山田 花子',allergies:'パラベン類、合成香料、ラテックス'},
+  {id:'c2',name:'佐藤 美咲',allergies:'サリチル酸、アルコール、ニッケル'},
+  {id:'c3',name:'田中 亜矢',allergies:'特になし（過去に精油で軽度の赤み）'},
+];
+
+// ── State
+let products = JSON.parse(lsGet('ac:p') || 'null') || JSON.parse(JSON.stringify(SP));
+let clients  = JSON.parse(lsGet('ac:c') || 'null') || JSON.parse(JSON.stringify(SC));
+let selIds   = new Set();
+
+function persist() {
+  lsSet('ac:p', JSON.stringify(products));
+  lsSet('ac:c', JSON.stringify(clients));
+}
+
+function showStorageNotice() {
+  if (!storageAvailable) {
+    ['storage-notice-p','storage-notice-c'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'block';
+    });
+  }
+}
+
+// ── Tab
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+name).classList.add('on');
+  const idx={check:0,products:1,clients:2}[name];
+  document.querySelectorAll('nav button')[idx].classList.add('on');
+  if(name==='products'){ showStorageNotice(); renderPList(); }
+  if(name==='clients'){  showStorageNotice(); renderCList(); }
+}
+
+// ── Check tab
+function renderCheckTab(){
+  const sel=document.getElementById('sel-client');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">— 顧客を選んでください —</option>';
+  clients.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c.id; o.textContent=c.name; sel.appendChild(o);
+  });
+  if(prev) sel.value=prev;
+
+  const box=document.getElementById('prod-btns');
+  box.innerHTML='';
+  selIds=new Set();
+  if(products.length===0){
+    box.innerHTML='<div style="color:#444;font-size:12px;">化粧品マスターに登録がありません</div>';
+  } else {
+    products.forEach(p=>{
+      const btn=document.createElement('div');
+      btn.className='prod-btn';
+      btn.dataset.id=p.id;
+      btn.setAttribute('role','button');
+      btn.setAttribute('tabindex','0');
+      btn.innerHTML=`<span class="chk"><svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5l3.5 3.5L11 1" stroke="#0c0e14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pname">${p.name}</span>`;
+      btn.addEventListener('click', function(){
+        const id=this.dataset.id;
+        if(selIds.has(id)){selIds.delete(id);this.classList.remove('sel');}
+        else{selIds.add(id);this.classList.add('sel');}
+        updateBtn();
+      });
+      box.appendChild(btn);
+    });
+  }
+  updateBtn();
+}
+
+function onClientChange(){
+  const id=document.getElementById('sel-client').value;
+  const c=clients.find(x=>x.id===id);
+  const d=document.getElementById('abox');
+  if(c){document.getElementById('atext').textContent=c.allergies;d.style.display='block';}
+  else{d.style.display='none';}
+  document.getElementById('result-area').innerHTML='';
+  updateBtn();
+}
+
+function updateBtn(){
+  const ok=!!document.getElementById('sel-client').value && selIds.size>0;
+  document.getElementById('check-btn').disabled=!ok;
+}
+
+// ── API Key
+function saveApiKey(){
+  const k=document.getElementById('apikey-input').value.trim();
+  if(k){
+    lsSet('ac:key',k);
+    document.getElementById('apikey-input').value='';
+    alert('APIキーを保存しました。');
+    document.getElementById('apibar').removeAttribute('open');
+  }
+}
+
+// ── Badge
+const RL={HIGH:'高リスク',MEDIUM:'要注意',LOW:'軽度注意',SAFE:'問題なし'};
+function badge(l){return `<span class="badge r-${l}"><span class="badge-dot"></span>${RL[l]||l}</span>`;}
+
+// ── Run
+async function runCheck(){
+  const cid=document.getElementById('sel-client').value;
+  const client=clients.find(c=>c.id===cid);
+  const prods=products.filter(p=>selIds.has(p.id));
+  if(!client||prods.length===0)return;
+  const area=document.getElementById('result-area');
+  area.innerHTML=`<div style="text-align:center;padding:30px 0;color:var(--muted);font-size:13px;"><span class="spin"></span>照合中...</div>`;
+  document.getElementById('check-btn').disabled=true;
+  const apiKey=lsGet('ac:key')||'';
+  let data;
+  if(apiKey){
+    try{data=await aiCheck(client,prods,apiKey);}
+    catch(e){data=localCheck(client,prods);data._fb='⚠ AI照合エラー（キーワードモードで表示）: '+e.message;}
+  } else {
+    data=localCheck(client,prods);data._nk=true;
+  }
+  renderResult(client,data,area);
+  document.getElementById('check-btn').disabled=false;
+}
+
+// ── AI
+async function aiCheck(client,prods,apiKey){
+  const pl=prods.map(p=>`【${p.name}】\n成分: ${p.ingredients}`).join('\n\n');
+  const prompt=`あなたはエステサロン向けアレルゲン安全チェックの専門システムです。
+
+顧客: ${client.name}
+申告アレルギー: ${client.allergies}
+
+使用予定化粧品:
+${pl}
+
+成分名はINCIや和名が混在。同義語・別名も考慮し、リスク成分を特定してください。
+アレルギーが「特になし」でも高感作リスク成分（香料、防腐剤等）は注意として挙げること。
+
+JSON形式のみで回答（説明文不要）:
+{"results":[{"product_name":"商品名","risk_level":"HIGH|MEDIUM|LOW|SAFE","flagged_ingredients":[{"ingredient":"成分名","reason":"理由1〜2文","severity":"HIGH|MEDIUM|LOW"}],"summary":"一言コメント"}],"overall_recommendation":"推奨事項2〜3文"}`;
+
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+  });
+  const d=await res.json();
+  if(d.error)throw new Error(d.error.message);
+  const txt=d.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+  return JSON.parse(txt);
+}
+
+// ── Local（キーワード照合）
+const AD=[
+  {keys:['paraben','パラベン','methylparaben','propylparaben','butylparaben'],label:'パラベン類',sev:'HIGH',reason:'パラベン系防腐剤。パラベンアレルギーの方は接触性皮膚炎のリスクがあります。'},
+  {keys:['fragrance','香料','parfum','linalool','リナロール','geraniol','ゲラニオール'],label:'香料成分',sev:'HIGH',reason:'合成香料・香気成分はアレルギー性接触皮膚炎の主要原因のひとつです。'},
+  {keys:['salicylic acid','サリチル酸'],label:'サリチル酸',sev:'HIGH',reason:'サリチル酸アレルギーのある方には使用を避ける必要があります。'},
+  {keys:['alcohol','アルコール','ethanol','エタノール'],label:'アルコール',sev:'MEDIUM',reason:'アルコール過敏の方は刺激・乾燥が生じる場合があります。'},
+  {keys:['latex','ラテックス'],label:'ラテックス',sev:'HIGH',reason:'ラテックスアレルギーは重篤な反応を示す可能性があります。'},
+  {keys:['nickel','ニッケル'],label:'ニッケル',sev:'HIGH',reason:'金属アレルギーの中で最も多く、接触で反応する場合があります。'},
+  {keys:['phenoxyethanol','フェノキシエタノール'],label:'フェノキシエタノール',sev:'LOW',reason:'一部の方で皮膚刺激が報告されています。'},
+  {keys:['lavender','ラベンダー','eucalyptus','ユーカリ','menthol','メントール'],label:'精油成分',sev:'MEDIUM',reason:'精油は天然由来ですが感作リスクがあります。過去に反応が出た方は注意が必要です。'},
+];
+
+function localCheck(client,prods){
+  const al=client.allergies.toLowerCase();
+  const results=prods.map(p=>{
+    const ig=p.ingredients.toLowerCase();
+    const flagged=[];
+    AD.forEach(d=>{
+      if(d.keys.some(k=>al.includes(k.toLowerCase()))&&d.keys.some(k=>ig.includes(k.toLowerCase()))){
+        const m=d.keys.find(k=>ig.includes(k.toLowerCase()));
+        flagged.push({ingredient:m,reason:d.reason,severity:d.sev});
+      }
+    });
+    let risk='SAFE';
+    if(flagged.some(f=>f.severity==='HIGH'))risk='HIGH';
+    else if(flagged.some(f=>f.severity==='MEDIUM'))risk='MEDIUM';
+    else if(flagged.some(f=>f.severity==='LOW'))risk='LOW';
+    return{product_name:p.name,risk_level:risk,flagged_ingredients:flagged,summary:risk==='SAFE'?'申告アレルギーとの照合で問題は検出されませんでした。':`${flagged.length}件の注意成分が検出されました。`};
+  });
+  const hh=results.some(r=>r.risk_level==='HIGH');
+  const hm=results.some(r=>r.risk_level==='MEDIUM');
+  return{results,overall_recommendation:hh?'高リスク成分が含まれる製品があります。使用を避けるかパッチテストを行ってください。':hm?'要注意成分が検出されました。施術前に確認し、必要に応じてパッチテストを実施してください。':'大きな問題は検出されませんでした。成分表示と口頭確認を併用してください。'};
+}
+
+// ── Render result
+function renderResult(client,data,area){
+  let h=`<div class="stitle">照合結果 <span>${client.name} 様</span></div>`;
+  if(data._nk)h+=`<div style="font-size:11px;color:#666;padding:8px 10px;background:var(--bg3);border-radius:8px;margin-bottom:12px;">※ APIキー未設定のためキーワード照合モードで動作中</div>`;
+  if(data._fb)h+=`<div class="err" style="margin-bottom:12px;">${data._fb}</div>`;
+  data.results.forEach(r=>{
+    h+=`<div class="res-card ${r.risk_level}"><div class="res-hd"><span class="pn">${r.product_name}</span>${badge(r.risk_level)}</div>`;
+    if(r.flagged_ingredients.length>0){
+      r.flagged_ingredients.forEach(f=>{h+=`<div class="flag-row">${badge(f.severity)}<span class="flag-name">${f.ingredient}</span><span class="flag-reason">${f.reason}</span></div>`;});
+    } else {h+='<div style="font-size:12px;color:#555;">フラグ成分なし</div>';}
+    h+=`<div class="res-sum">${r.summary}</div></div>`;
+  });
+  h+=`<div class="overall"><div class="ol">総合推奨事項</div><p>${data.overall_recommendation}</p></div>`;
+  area.innerHTML=h;
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── Product list
+function renderPList(){
+  document.getElementById('pcnt').textContent=`(${products.length}件)`;
+  const el=document.getElementById('plist');
+  if(products.length===0){el.innerHTML='<div style="color:#444;font-size:13px;">登録がありません</div>';return;}
+  el.innerHTML=products.map(p=>`<div class="list-item"><div class="li-hd"><div style="flex:1;min-width:0"><div class="li-name">${p.name}</div><div class="li-sub">${p.ingredients}</div></div><div class="li-acts"><button class="btn-sm" style="color:var(--muted)" onclick="openProductModal('${p.id}')">編集</button><button class="btn-sm" style="color:var(--muted)" onclick="delProduct('${p.id}')">削除</button></div></div></div>`).join('');
+}
+
+function openProductModal(id){
+  const p=id?products.find(x=>x.id===id):null;
+  document.getElementById('pm-title').textContent=p?'化粧品を編集':'化粧品を新規登録';
+  document.getElementById('pm-id').value=p?p.id:'';
+  document.getElementById('pm-name').value=p?p.name:'';
+  document.getElementById('pm-ings').value=p?p.ingredients:'';
+  document.getElementById('pm').style.display='flex';
+}
+
+function saveProduct(){
+  const id=document.getElementById('pm-id').value;
+  const name=document.getElementById('pm-name').value.trim();
+  const ings=document.getElementById('pm-ings').value.trim();
+  if(!name||!ings)return alert('商品名と成分を入力してください。');
+  if(id){products=products.map(p=>p.id===id?{...p,name,ingredients:ings}:p);}
+  else{products.push({id:'p'+Date.now(),name,ingredients:ings});}
+  persist();closeM('pm');renderPList();renderCheckTab();
+}
+
+function delProduct(id){
+  if(!confirm('削除しますか？'))return;
+  products=products.filter(p=>p.id!==id);
+  persist();renderPList();renderCheckTab();
+}
+
+// ── Client list
+function renderCList(){
+  document.getElementById('ccnt').textContent=`(${clients.length}件)`;
+  const el=document.getElementById('clist');
+  if(clients.length===0){el.innerHTML='<div style="color:#444;font-size:13px;">登録がありません</div>';return;}
+  el.innerHTML=clients.map(c=>`<div class="list-item"><div class="li-hd"><div style="flex:1"><div class="li-name">${c.name}</div><div style="font-size:12px;color:#888;margin-top:3px;"><span style="color:#555;font-size:10px;margin-right:6px;">アレルギー</span>${c.allergies}</div></div><div class="li-acts"><button class="btn-sm" style="color:var(--muted)" onclick="openClientModal('${c.id}')">編集</button><button class="btn-sm" style="color:var(--muted)" onclick="delClient('${c.id}')">削除</button></div></div></div>`).join('');
+}
+
+function openClientModal(id){
+  const c=id?clients.find(x=>x.id===id):null;
+  document.getElementById('cm-title').textContent=c?'顧客情報を編集':'顧客を新規登録';
+  document.getElementById('cm-id').value=c?c.id:'';
+  document.getElementById('cm-name').value=c?c.name:'';
+  document.getElementById('cm-alg').value=c?c.allergies:'';
+  document.getElementById('cm').style.display='flex';
+}
+
+function saveClient(){
+  const id=document.getElementById('cm-id').value;
+  const name=document.getElementById('cm-name').value.trim();
+  const allergies=document.getElementById('cm-alg').value.trim();
+  if(!name)return alert('氏名を入力してください。');
+  if(id){clients=clients.map(c=>c.id===id?{...c,name,allergies}:c);}
+  else{clients.push({id:'c'+Date.now(),name,allergies});}
+  persist();closeM('cm');renderCList();renderCheckTab();
+}
+
+function delClient(id){
+  if(!confirm('削除しますか？'))return;
+  clients=clients.filter(c=>c.id!==id);
+  persist();renderCList();renderCheckTab();
+}
+
+// ── Modal
+function closeM(id){document.getElementById(id).style.display='none';}
+function bgClose(e,id){if(e.target===e.currentTarget)closeM(id);}
+
+// ── Init
+renderCheckTab();
+</script>
+
+</body>
+</html>
