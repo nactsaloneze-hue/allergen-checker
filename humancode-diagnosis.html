@@ -1,1 +1,436 @@
+<!DOCTYPE html>
 
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>思考の時制 | HumanCode Diagnosis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #080b14; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0a0d18; }
+    ::-webkit-scrollbar-thumb { background: #1e2d3d; border-radius: 2px; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) translateX(0px); }
+      33% { transform: translateY(-12px) translateX(6px); }
+      66% { transform: translateY(6px) translateX(-8px); }
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const questions = [
+      {
+        id: 1,
+        text: "新しいビジネスアイデアが浮かんだ。まず何をする？",
+        options: [
+          { label: "「3年後どうなってるか」を想像してワクワクする", type: "future" },
+          { label: "とりあえず今日中に誰かに話してみる", type: "present" },
+          { label: "似たような事例を調べて、成功パターンを確認する", type: "past" },
+        ],
+      },
+      {
+        id: 2,
+        text: "初対面の人と会うとき、まず気になるのは？",
+        options: [
+          { label: "この人と将来どんなことができるか", type: "future" },
+          { label: "今この瞬間の空気感・エネルギー", type: "present" },
+          { label: "どんな経歴・背景を持っているか", type: "past" },
+        ],
+      },
+      {
+        id: 3,
+        text: "失敗したとき、最初にすることは？",
+        options: [
+          { label: "次はどう改善するかのプランを立てる", type: "future" },
+          { label: "気持ちを切り替えてすぐ次の行動に移る", type: "present" },
+          { label: "なぜ失敗したか原因を丁寧に振り返る", type: "past" },
+        ],
+      },
+      {
+        id: 4,
+        text: "旅行に行くなら？",
+        options: [
+          { label: "まだ行ったことのない未知の場所", type: "future" },
+          { label: "行き当たりばったりで気分で決める", type: "present" },
+          { label: "昔よかった場所にまた行く", type: "past" },
+        ],
+      },
+      {
+        id: 5,
+        text: "会議で一番モヤモヤするのは？",
+        options: [
+          { label: "具体論ばかりで「で、最終的にどこへ向かうの？」となる", type: "future" },
+          { label: "理屈が多くて「もう動こうよ」と思う", type: "present" },
+          { label: "前回の経緯を無視した議論が始まったとき", type: "past" },
+        ],
+      },
+      {
+        id: 6,
+        text: "自分の一番の強みは？",
+        options: [
+          { label: "まだないものを構想できる想像力", type: "future" },
+          { label: "その場の変化に即対応できる適応力", type: "present" },
+          { label: "積み上げてきた経験と人への共感力", type: "past" },
+        ],
+      },
+      {
+        id: 7,
+        text: "好きなコンテンツのジャンルは？",
+        options: [
+          { label: "SF・テクノロジー・未来予測", type: "future" },
+          { label: "ドキュメンタリー・リアリティ・ライブ系", type: "present" },
+          { label: "歴史・回顧録・インタビュー・人間ドラマ", type: "past" },
+        ],
+      },
+    ];
+
+    const results = {
+      future: {
+        type: "未来志向型", code: "FUTURE", icon: "◈",
+        color: "#00e5ff", glow: "rgba(0,229,255,0.4)",
+        brain: "前頭葉優位 / 理性系",
+        tagline: "まだ存在しない世界を設計する人",
+        strength: "ビジョン設計・戦略立案・抽象思考が得意。「なぜやるか」を語ることで人を動かす力がある。",
+        advice: "「5年後の店像」を先に語れ。スタッフもお客も、未来のストーリーで動く。あなたのビジョンが最大の集客コンテンツになる。",
+      },
+      present: {
+        type: "現在志向型", code: "PRESENT", icon: "◉",
+        color: "#ff6b35", glow: "rgba(255,107,53,0.4)",
+        brain: "扁桃体優位 / 本能系",
+        tagline: "今この瞬間に全力を注ぐ人",
+        strength: "即断即決・現場対応力・ライブ感が武器。空気を読んでその場を最適化する天才。",
+        advice: "「今日だけ」の体験設計が最大の差別化。限定イベント・サプライズ演出でリピーターの感情を揺さぶれ。",
+      },
+      past: {
+        type: "過去志向型", code: "PAST", icon: "◎",
+        color: "#a78bfa", glow: "rgba(167,139,250,0.4)",
+        brain: "海馬・側頭葉 / 感情系",
+        tagline: "経験と文脈で信頼を築く人",
+        strength: "深い共感力・文脈理解・信頼構築が得意。「なぜあなたを信じるか」を自然に示せる。",
+        advice: "「うちの歴史」をコンテンツにせよ。積み上げた物語が常連を伝道師に変える。口コミの本質はデータではなく感情的文脈だ。",
+      },
+    };
+
+    function useTypewriter(text, speed = 18, active = true) {
+      const [displayed, setDisplayed] = useState("");
+      useEffect(() => {
+        if (!active) { setDisplayed(text); return; }
+        setDisplayed("");
+        let i = 0;
+        const interval = setInterval(() => {
+          i++;
+          setDisplayed(text.slice(0, i));
+          if (i >= text.length) clearInterval(interval);
+        }, speed);
+        return () => clearInterval(interval);
+      }, [text, active]);
+      return displayed;
+    }
+
+    function ParticleField() {
+      return (
+        <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+          {[...Array(24)].map((_, i) => (
+            <div key={i} style={{
+              position: "absolute",
+              width: i % 3 === 0 ? "2px" : "1px",
+              height: i % 3 === 0 ? "2px" : "1px",
+              borderRadius: "50%",
+              background: i % 3 === 0 ? "#00e5ff" : i % 3 === 1 ? "#a78bfa" : "#ff6b35",
+              left: `${(i * 4.1 + 2) % 100}%`,
+              top: `${(i * 7.3 + 5) % 100}%`,
+              opacity: 0.3 + (i % 5) * 0.1,
+              animation: `float ${4 + (i % 4)}s ease-in-out infinite`,
+              animationDelay: `${(i * 0.3) % 3}s`,
+            }} />
+          ))}
+        </div>
+      );
+    }
+
+    function ProgressBar({ current, total }) {
+      const pct = (current / total) * 100;
+      return (
+        <div style={{ width: "100%", marginBottom: "2rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+            <span style={{ color: "#4a5568", fontSize: "0.7rem", letterSpacing: "0.15em", fontFamily: "monospace" }}>
+              SEQUENCE_{String(current).padStart(2, "0")}
+            </span>
+            <span style={{ color: "#4a5568", fontSize: "0.7rem", fontFamily: "monospace" }}>{Math.round(pct)}%</span>
+          </div>
+          <div style={{ height: "2px", background: "#1a1a2e", borderRadius: "2px", overflow: "hidden" }}>
+            <div style={{
+              height: "100%", width: `${pct}%`,
+              background: "linear-gradient(90deg, #00e5ff, #a78bfa)",
+              transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)",
+              boxShadow: "0 0 8px rgba(0,229,255,0.6)",
+            }} />
+          </div>
+        </div>
+      );
+    }
+
+    function QuestionCard({ question, onAnswer, index, total }) {
+      const [selected, setSelected] = useState(null);
+      const [animate, setAnimate] = useState(false);
+      useEffect(() => {
+        setSelected(null);
+        setTimeout(() => setAnimate(true), 50);
+        return () => setAnimate(false);
+      }, [question.id]);
+      const handleSelect = (opt) => {
+        setSelected(opt.type);
+        setTimeout(() => onAnswer(opt.type), 400);
+      };
+      const qText = useTypewriter(question.text, 22, true);
+      const colors = { future: "#00e5ff", present: "#ff6b35", past: "#a78bfa" };
+
+      return (
+        <div style={{ opacity: animate ? 1 : 0, transform: animate ? "translateY(0)" : "translateY(20px)", transition: "all 0.4s ease", width: "100%" }}>
+          <ProgressBar current={index} total={total} />
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "2rem", marginBottom: "1.5rem", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, #00e5ff44, transparent)" }} />
+            <p style={{ color: "#e2e8f0", fontSize: "1.1rem", lineHeight: 1.7, fontFamily: "'Noto Sans JP', sans-serif", margin: 0, minHeight: "2.5rem" }}>
+              {qText}<span style={{ animation: "blink 1s infinite", color: "#00e5ff" }}>_</span>
+            </p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {question.options.map((opt, i) => {
+              const isSelected = selected === opt.type;
+              const c = colors[opt.type];
+              const rgb = opt.type === "future" ? "0,229,255" : opt.type === "present" ? "255,107,53" : "167,139,250";
+              return (
+                <button key={i} onClick={() => handleSelect(opt)}
+                  style={{
+                    background: isSelected ? `rgba(${rgb},0.12)` : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${isSelected ? c : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: "12px", padding: "1rem 1.25rem",
+                    color: isSelected ? c : "#94a3b8",
+                    fontSize: "0.88rem", textAlign: "left", cursor: "pointer",
+                    transition: "all 0.2s ease", display: "flex", alignItems: "center", gap: "0.75rem",
+                    fontFamily: "'Noto Sans JP', sans-serif",
+                    boxShadow: isSelected ? `0 0 16px rgba(${rgb},0.2)` : "none",
+                  }}
+                  onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.borderColor = `${c}44`; e.currentTarget.style.color = "#e2e8f0"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}}
+                  onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}}
+                >
+                  <span style={{ width: "24px", height: "24px", borderRadius: "50%", border: `1px solid ${isSelected ? c : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", color: isSelected ? c : "#4a5568", flexShrink: 0, fontFamily: "monospace" }}>
+                    {isSelected ? "●" : String.fromCharCode(65 + i)}
+                  </span>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function ResultCard({ scores }) {
+      const topType = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+      const result = results[topType];
+      const [show, setShow] = useState(false);
+      const [copied, setCopied] = useState(false);
+      const [shareMode, setShareMode] = useState("linkedin");
+
+      useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
+
+      const total = Object.values(scores).reduce((a, b) => a + b, 0);
+      const pct = (v) => Math.round((v / total) * 100);
+      const tagline = useTypewriter(result.tagline, 40, show);
+      const strength = useTypewriter(result.strength, 18, show);
+      const rgb = topType === "future" ? "0,229,255" : topType === "present" ? "255,107,53" : "167,139,250";
+
+      const shareTexts = {
+        linkedin: `【思考の時制 診断結果】\n\n私は「${result.type}」でした。\n${result.icon} ${result.tagline}\n\n◆ 認知プロファイル\n未来志向 ${pct(scores.future)}% ／ 現在志向 ${pct(scores.present)}% ／ 過去志向 ${pct(scores.past)}%\n\n◆ 強み\n${result.strength}\n\n◆ 実店舗へのアドバイス\n${result.advice}\n\n#HumanCode #思考の時制 #認知特性 #ビジネス思考`,
+        x: `【思考の時制診断】\n私は「${result.type}」${result.icon}\n${result.tagline}\n\n未来${pct(scores.future)}% 現在${pct(scores.present)}% 過去${pct(scores.past)}%\n\nあなたは？ #HumanCode #思考の時制`,
+      };
+
+      const handleCopy = async () => {
+        try {
+          await navigator.clipboard.writeText(shareTexts[shareMode]);
+        } catch {
+          const el = document.createElement("textarea");
+          el.value = shareTexts[shareMode];
+          el.style.position = "fixed";
+          el.style.opacity = "0";
+          document.body.appendChild(el);
+          el.focus();
+          el.select();
+          document.execCommand("copy");
+          document.body.removeChild(el);
+        }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      return (
+        <div style={{ opacity: show ? 1 : 0, transition: "opacity 0.6s ease", width: "100%" }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <div style={{ fontSize: "0.65rem", letterSpacing: "0.3em", color: "#4a5568", fontFamily: "monospace", marginBottom: "1rem" }}>DIAGNOSIS COMPLETE</div>
+            <div style={{ fontSize: "5rem", marginBottom: "0.5rem", filter: `drop-shadow(0 0 20px ${result.glow})`, lineHeight: 1, color: result.color }}>{result.icon}</div>
+            <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: result.color, fontFamily: "monospace", opacity: 0.7, marginBottom: "0.5rem" }}>{result.brain}</div>
+            <h2 style={{ fontSize: "2rem", fontWeight: "700", color: "#f1f5f9", margin: "0 0 0.5rem", fontFamily: "'Noto Sans JP', sans-serif", letterSpacing: "0.05em" }}>{result.type}</h2>
+            <p style={{ color: result.color, fontSize: "0.95rem", fontFamily: "'Noto Sans JP', sans-serif", opacity: 0.9, minHeight: "1.5rem" }}>{tagline}</p>
+          </div>
+
+          {/* Profile bars */}
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.25rem" }}>
+            <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "#4a5568", fontFamily: "monospace", marginBottom: "1rem" }}>COGNITIVE PROFILE</div>
+            {[{ key: "future", label: "未来志向", color: "#00e5ff" }, { key: "present", label: "現在志向", color: "#ff6b35" }, { key: "past", label: "過去志向", color: "#a78bfa" }].map(({ key, label, color }) => (
+              <div key={key} style={{ marginBottom: "0.75rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+                  <span style={{ color: "#94a3b8", fontSize: "0.8rem", fontFamily: "'Noto Sans JP', sans-serif" }}>{label}</span>
+                  <span style={{ color, fontSize: "0.75rem", fontFamily: "monospace" }}>{scores[key]}/{total}</span>
+                </div>
+                <div style={{ height: "3px", background: "#1a1a2e", borderRadius: "2px" }}>
+                  <div style={{ height: "100%", width: show ? `${(scores[key] / total) * 100}%` : "0%", background: color, borderRadius: "2px", boxShadow: `0 0 6px ${color}`, transition: "width 1s cubic-bezier(0.4,0,0.2,1) 0.3s" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Strength */}
+          <div style={{ background: `rgba(${rgb},0.05)`, border: `1px solid ${result.color}22`, borderRadius: "12px", padding: "1.25rem", marginBottom: "1.25rem" }}>
+            <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: result.color, fontFamily: "monospace", marginBottom: "0.75rem", opacity: 0.7 }}>STRENGTH</div>
+            <p style={{ color: "#cbd5e1", fontSize: "0.88rem", lineHeight: 1.8, fontFamily: "'Noto Sans JP', sans-serif", margin: 0, minHeight: "3rem" }}>{strength}</p>
+          </div>
+
+          {/* Advice */}
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.25rem", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, width: "3px", height: "100%", background: result.color, boxShadow: `0 0 8px ${result.glow}` }} />
+            <div style={{ paddingLeft: "1rem" }}>
+              <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "#4a5568", fontFamily: "monospace", marginBottom: "0.75rem" }}>STORE LEVERAGE ADVICE</div>
+              <p style={{ color: "#e2e8f0", fontSize: "0.9rem", lineHeight: 1.8, fontFamily: "'Noto Sans JP', sans-serif", margin: 0 }}>{result.advice}</p>
+            </div>
+          </div>
+
+          {/* Share */}
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.25rem" }}>
+            <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "#4a5568", fontFamily: "monospace", marginBottom: "1rem" }}>SHARE YOUR CODE</div>
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+              {[{ key: "linkedin", label: "LinkedIn" }, { key: "x", label: "X / Twitter" }].map(({ key, label }) => (
+                <button key={key} onClick={() => setShareMode(key)}
+                  style={{ padding: "0.35rem 0.85rem", borderRadius: "20px", border: `1px solid ${shareMode === key ? result.color : "rgba(255,255,255,0.1)"}`, background: shareMode === key ? `rgba(${rgb},0.1)` : "transparent", color: shareMode === key ? result.color : "#4a5568", fontSize: "0.72rem", fontFamily: "monospace", letterSpacing: "0.05em", cursor: "pointer", transition: "all 0.2s ease" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div style={{ background: "#060810", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "8px", padding: "0.85rem", marginBottom: "0.75rem", maxHeight: "130px", overflowY: "auto" }}>
+              <p style={{ color: "#64748b", fontSize: "0.75rem", lineHeight: 1.7, fontFamily: "'Noto Sans JP', sans-serif", margin: 0, whiteSpace: "pre-wrap" }}>{shareTexts[shareMode]}</p>
+            </div>
+            <button onClick={handleCopy}
+              style={{ width: "100%", padding: "0.85rem", background: copied ? "rgba(34,197,94,0.12)" : `rgba(${rgb},0.1)`, border: `1px solid ${copied ? "#22c55e" : result.color}`, borderRadius: "10px", color: copied ? "#22c55e" : result.color, fontSize: "0.78rem", letterSpacing: "0.15em", fontFamily: "monospace", cursor: "pointer", transition: "all 0.25s ease", boxShadow: copied ? "0 0 16px rgba(34,197,94,0.2)" : `0 0 12px ${result.glow}` }}>
+              {copied ? "✓  COPIED!" : "⧉  テキストをコピー"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [phase, setPhase] = useState("intro");
+      const [currentQ, setCurrentQ] = useState(0);
+      const [scores, setScores] = useState({ future: 0, present: 0, past: 0 });
+
+      const handleAnswer = (type) => {
+        const newScores = { ...scores, [type]: scores[type] + 1 };
+        setScores(newScores);
+        if (currentQ + 1 >= questions.length) setPhase("result");
+        else setCurrentQ(currentQ + 1);
+      };
+
+      const handleReset = () => { setPhase("intro"); setCurrentQ(0); setScores({ future: 0, present: 0, past: 0 }); };
+
+      return (
+        <div style={{ minHeight: "100vh", background: "#080b14", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", position: "relative" }}>
+          <ParticleField />
+          <div style={{ position: "fixed", inset: 0, backgroundImage: "linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px)", backgroundSize: "60px 60px", pointerEvents: "none", zIndex: 0 }} />
+
+          <div style={{ width: "100%", maxWidth: "520px", position: "relative", zIndex: 1 }}>
+            {/* Logo bar */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div style={{ width: "8px", height: "8px", background: "#00e5ff", borderRadius: "50%", boxShadow: "0 0 8px #00e5ff", animation: "blink 2s infinite" }} />
+                <span style={{ fontFamily: "monospace", fontSize: "0.75rem", letterSpacing: "0.25em", color: "#00e5ff", opacity: 0.8 }}>HUMANCODE_LAB</span>
+              </div>
+              <span style={{ fontFamily: "monospace", fontSize: "0.65rem", color: "#2d3748", letterSpacing: "0.1em" }}>v1.0.0</span>
+            </div>
+
+            {/* Main card */}
+            <div style={{ background: "rgba(12,16,28,0.8)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", padding: "2rem", boxShadow: "0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
+
+              {phase === "intro" && (
+                <div style={{ animation: "fadeSlideUp 0.5s ease forwards", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.65rem", letterSpacing: "0.3em", color: "#4a5568", fontFamily: "monospace", marginBottom: "1.5rem" }}>COGNITIVE TENSE ANALYSIS</div>
+                  <h1 style={{ fontSize: "2.2rem", fontWeight: "900", margin: "0 0 0.5rem", background: "linear-gradient(135deg, #00e5ff, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontFamily: "'Noto Sans JP', sans-serif", letterSpacing: "0.05em", lineHeight: 1.2 }}>思考の時制</h1>
+                  <p style={{ color: "#4a5568", fontSize: "0.8rem", fontFamily: "monospace", letterSpacing: "0.1em", marginBottom: "2rem" }}>HumanCode Diagnosis</p>
+                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "1.25rem", marginBottom: "2rem", textAlign: "left" }}>
+                    <p style={{ color: "#94a3b8", fontSize: "0.88rem", lineHeight: 1.8, fontFamily: "'Noto Sans JP', sans-serif", margin: 0 }}>
+                      あなたの思考は、どの時制で動いているか——<br />7問の直感的な問いから、認知特性を分析します。
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginBottom: "2rem" }}>
+                    {[{ label: "未来志向", color: "#00e5ff" }, { label: "現在志向", color: "#ff6b35" }, { label: "過去志向", color: "#a78bfa" }].map(({ label, color }) => (
+                      <div key={label} style={{ padding: "0.3rem 0.75rem", border: `1px solid ${color}44`, borderRadius: "20px", fontSize: "0.72rem", color, fontFamily: "'Noto Sans JP', sans-serif", background: `rgba(${color === "#00e5ff" ? "0,229,255" : color === "#ff6b35" ? "255,107,53" : "167,139,250"},0.06)` }}>{label}</div>
+                    ))}
+                  </div>
+                  <button onClick={() => setPhase("quiz")}
+                    style={{ width: "100%", padding: "1rem", background: "linear-gradient(135deg, rgba(0,229,255,0.15), rgba(167,139,250,0.15))", border: "1px solid rgba(0,229,255,0.3)", borderRadius: "12px", color: "#00e5ff", fontSize: "0.9rem", letterSpacing: "0.15em", fontFamily: "monospace", cursor: "pointer", transition: "all 0.2s ease", boxShadow: "0 0 20px rgba(0,229,255,0.1)" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(0,229,255,0.25), rgba(167,139,250,0.25))"; e.currentTarget.style.boxShadow = "0 0 32px rgba(0,229,255,0.2)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(0,229,255,0.15), rgba(167,139,250,0.15))"; e.currentTarget.style.boxShadow = "0 0 20px rgba(0,229,255,0.1)"; }}>
+                    START DIAGNOSIS →
+                  </button>
+                </div>
+              )}
+
+              {phase === "quiz" && (
+                <QuestionCard question={questions[currentQ]} onAnswer={handleAnswer} index={currentQ + 1} total={questions.length} />
+              )}
+
+              {phase === "result" && (
+                <>
+                  <ResultCard scores={scores} />
+                  <button onClick={handleReset}
+                    style={{ width: "100%", padding: "0.75rem", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "#4a5568", fontSize: "0.75rem", letterSpacing: "0.15em", fontFamily: "monospace", cursor: "pointer", transition: "all 0.2s ease" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "#94a3b8"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#4a5568"; }}>
+                    RETRY DIAGNOSIS
+                  </button>
+                </>
+              )}
+            </div>
+
+            <p style={{ textAlign: "center", color: "#1e2d3d", fontSize: "0.65rem", fontFamily: "monospace", letterSpacing: "0.1em", marginTop: "1.5rem" }}>
+              © HUMANCODE LAB — COGNITIVE TENSE SYSTEM
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+
+</body>
+</html>
