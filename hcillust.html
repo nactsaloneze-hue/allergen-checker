@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>思考の時制 | HumanCode Diagnosis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080b14;
+      font-family: 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; position: relative; overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0a0d18; }
+    ::-webkit-scrollbar-thumb { background: #1e2d3d; border-radius: 2px; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px; pointer-events: none; z-index: 0;
+    }
+    @keyframes float { 0%,100%{transform:translateY(0) translateX(0)} 33%{transform:translateY(-12px) translateX(6px)} 66%{transform:translateY(6px) translateX(-8px)} }
+    @keyframes fadeSlideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes charReveal { from{opacity:0;transform:translateY(16px) scale(0.92);filter:blur(4px)} to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)} }
+    @keyframes pulse { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.03)} }
+    @keyframes barGrow { from{width:0%} }
+    #particles { position:fixed; inset:0; pointer-events:none; z-index:0; }
+    .particle { position:absolute; border-radius:50%; }
+    #app { width:100%; max-width:520px; position:relative; z-index:1; }
+    .logo-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; }
+    .logo-left { display:flex; align-items:center; gap:.5rem; }
+    .logo-dot { width:8px; height:8px; background:#00e5ff; border-radius:50%; box-shadow:0 0 8px #00e5ff; animation:blink 2s infinite; }
+    .logo-text { font-family:monospace; font-size:.75rem; letter-spacing:.25em; color:#00e5ff; opacity:.8; }
+    .version { font-family:monospace; font-size:.65rem; color:#2d3748; letter-spacing:.1em; }
+    .card { background:rgba(12,16,28,.8); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.06); border-radius:20px; padding:2rem; box-shadow:0 24px 64px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06); }
+    .section { display:none; }
+    .section.active { display:block; animation:fadeSlideUp .45s ease forwards; }
+    .intro-wrap { text-align:center; }
+    .intro-label { font-size:.65rem; letter-spacing:.3em; color:#4a5568; font-family:monospace; margin-bottom:1.5rem; }
+    .intro-title { font-size:2.2rem; font-weight:900; background:linear-gradient(135deg,#00e5ff,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:.05em; line-height:1.2; margin-bottom:.5rem; }
+    .intro-sub { color:#4a5568; font-size:.8rem; font-family:monospace; letter-spacing:.1em; margin-bottom:2rem; }
+    .intro-desc { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; margin-bottom:2rem; text-align:left; color:#94a3b8; font-size:.88rem; line-height:1.8; }
+    .intro-badges { display:flex; gap:.5rem; justify-content:center; margin-bottom:2rem; }
+    .badge { padding:.3rem .75rem; border-radius:20px; font-size:.72rem; }
+    .badge-future { border:1px solid rgba(0,229,255,.27); color:#00e5ff; background:rgba(0,229,255,.06); }
+    .badge-present { border:1px solid rgba(255,107,53,.27); color:#ff6b35; background:rgba(255,107,53,.06); }
+    .badge-past { border:1px solid rgba(167,139,250,.27); color:#a78bfa; background:rgba(167,139,250,.06); }
+    .btn-start { width:100%; padding:1rem; background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(167,139,250,.15)); border:1px solid rgba(0,229,255,.3); border-radius:12px; color:#00e5ff; font-size:.9rem; letter-spacing:.15em; font-family:monospace; cursor:pointer; transition:all .2s ease; box-shadow:0 0 20px rgba(0,229,255,.1); }
+    .btn-start:hover { background:linear-gradient(135deg,rgba(0,229,255,.25),rgba(167,139,250,.25)); box-shadow:0 0 32px rgba(0,229,255,.2); }
+    .btn-retry { width:100%; margin-top:.75rem; padding:.75rem; background:transparent; border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#4a5568; font-size:.75rem; letter-spacing:.15em; font-family:monospace; cursor:pointer; transition:all .2s ease; }
+    .btn-retry:hover { border-color:rgba(255,255,255,.2); color:#94a3b8; }
+    .progress-labels { display:flex; justify-content:space-between; margin-bottom:.5rem; }
+    .progress-seq { color:#4a5568; font-size:.7rem; letter-spacing:.15em; font-family:monospace; }
+    .progress-pct { color:#4a5568; font-size:.7rem; font-family:monospace; }
+    .progress-track { height:2px; background:#1a1a2e; border-radius:2px; overflow:hidden; margin-bottom:2rem; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,#00e5ff,#a78bfa); box-shadow:0 0 8px rgba(0,229,255,.6); transition:width .5s cubic-bezier(.4,0,.2,1); }
+    .question-box { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:2rem; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+    .question-box::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,#00e5ff44,transparent); }
+    .question-text { color:#e2e8f0; font-size:1.1rem; line-height:1.7; min-height:2.5rem; }
+    .cursor { animation:blink 1s infinite; color:#00e5ff; }
+    .options { display:flex; flex-direction:column; gap:.75rem; }
+    .opt-btn { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:1rem 1.25rem; color:#94a3b8; font-size:.88rem; text-align:left; cursor:pointer; transition:all .2s ease; display:flex; align-items:center; gap:.75rem; font-family:'Noto Sans JP',sans-serif; }
+    .opt-circle { width:24px; height:24px; border-radius:50%; border:1px solid rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; font-size:.7rem; color:#4a5568; flex-shrink:0; font-family:monospace; }
+    .result-label { text-align:center; font-size:.65rem; letter-spacing:.3em; color:#4a5568; font-family:monospace; margin-bottom:1rem; }
+    .char-wrap { display:inline-block; padding:1rem 1.5rem .5rem; border-radius:20px; position:relative; margin-bottom:1rem; }
+    .char-badge { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); border-radius:20px; padding:.2rem .75rem; font-size:.62rem; font-family:monospace; letter-spacing:.15em; white-space:nowrap; }
+    .result-type-wrap { text-align:center; margin-bottom:2rem; }
+    .result-icon { font-size:.7rem; letter-spacing:.2em; font-family:monospace; opacity:.7; margin-bottom:.5rem; }
+    .result-type { font-size:2rem; font-weight:700; color:#f1f5f9; letter-spacing:.05em; margin-bottom:.5rem; }
+    .result-tagline { font-size:.95rem; opacity:.9; min-height:1.5rem; }
+    .panel { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; margin-bottom:1.25rem; }
+    .panel-label { font-size:.65rem; letter-spacing:.2em; color:#4a5568; font-family:monospace; margin-bottom:1rem; }
+    .bar-row { margin-bottom:.75rem; }
+    .bar-meta { display:flex; justify-content:space-between; margin-bottom:.3rem; }
+    .bar-name { color:#94a3b8; font-size:.8rem; }
+    .bar-score { font-size:.75rem; font-family:monospace; }
+    .bar-track { height:3px; background:#1a1a2e; border-radius:2px; }
+    .bar-fill { height:100%; border-radius:2px; animation:barGrow .8s cubic-bezier(.4,0,.2,1) .3s both; }
+    .strength-panel { border-radius:12px; padding:1.25rem; margin-bottom:1.25rem; }
+    .strength-label { font-size:.65rem; letter-spacing:.2em; font-family:monospace; opacity:.7; margin-bottom:.75rem; }
+    .strength-text { color:#cbd5e1; font-size:.88rem; line-height:1.8; min-height:3rem; }
+    .advice-panel { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:1.25rem; margin-bottom:1.25rem; position:relative; overflow:hidden; }
+    .advice-bar { position:absolute; top:0; left:0; width:3px; height:100%; }
+    .advice-inner { padding-left:1rem; }
+    .advice-label { font-size:.65rem; letter-spacing:.2em; color:#4a5568; font-family:monospace; margin-bottom:.75rem; }
+    .advice-text { color:#e2e8f0; font-size:.9rem; line-height:1.8; }
+    .share-tabs { display:flex; gap:.5rem; margin-bottom:1rem; }
+    .tab-btn { padding:.35rem .85rem; border-radius:20px; font-size:.72rem; font-family:monospace; letter-spacing:.05em; cursor:pointer; transition:all .2s ease; }
+    .share-preview { background:#060810; border:1px solid rgba(255,255,255,.04); border-radius:8px; padding:.85rem; margin-bottom:.75rem; max-height:130px; overflow-y:auto; color:#64748b; font-size:.75rem; line-height:1.7; white-space:pre-wrap; }
+    .btn-copy { width:100%; padding:.85rem; border-radius:10px; font-size:.78rem; letter-spacing:.15em; font-family:monospace; cursor:pointer; transition:all .25s ease; }
+    .footer { text-align:center; color:#1e2d3d; font-size:.65rem; font-family:monospace; letter-spacing:.1em; margin-top:1.5rem; }
+  </style>
+</head>
+<body>
+<div id="particles"></div>
+<div id="app">
+  <div class="logo-bar">
+    <div class="logo-left">
+      <div class="logo-dot"></div>
+      <span class="logo-text">HUMANCODE_LAB</span>
+    </div>
+    <span class="version">v1.1.0</span>
+  </div>
+  <div class="card">
+    <div id="sec-intro" class="section active">
+      <div class="intro-wrap">
+        <div class="intro-label">COGNITIVE TENSE ANALYSIS</div>
+        <h1 class="intro-title">思考の時制</h1>
+        <p class="intro-sub">HumanCode Diagnosis</p>
+        <div class="intro-desc">あなたの思考は、どの時制で動いているか——<br>7問の直感的な問いから、認知特性を分析します。</div>
+        <div class="intro-badges">
+          <div class="badge badge-future">未来志向</div>
+          <div class="badge badge-present">現在志向</div>
+          <div class="badge badge-past">過去志向</div>
+        </div>
+        <button class="btn-start" onclick="startQuiz()">START DIAGNOSIS →</button>
+      </div>
+    </div>
+    <div id="sec-quiz" class="section">
+      <div class="progress-labels">
+        <span class="progress-seq" id="seq-label">SEQUENCE_01</span>
+        <span class="progress-pct" id="pct-label">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="question-box"><p class="question-text" id="q-text"></p></div>
+      <div class="options" id="options"></div>
+    </div>
+    <div id="sec-result" class="section">
+      <div class="result-label">DIAGNOSIS COMPLETE</div>
+      <div style="text-align:center">
+        <div class="char-wrap" id="char-wrap">
+          <div id="char-svg"></div>
+          <div class="char-badge" id="char-badge"></div>
+        </div>
+      </div>
+      <div class="result-type-wrap">
+        <div class="result-icon" id="r-icon"></div>
+        <div class="result-type" id="r-type"></div>
+        <div class="result-tagline" id="r-tagline"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label">COGNITIVE PROFILE</div>
+        <div id="bars"></div>
+      </div>
+      <div class="strength-panel" id="strength-panel">
+        <div class="strength-label" id="strength-label">STRENGTH</div>
+        <p class="strength-text" id="strength-text"></p>
+      </div>
+      <div class="advice-panel">
+        <div class="advice-bar" id="advice-bar"></div>
+        <div class="advice-inner">
+          <div class="advice-label">STORE LEVERAGE ADVICE</div>
+          <p class="advice-text" id="advice-text"></p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-label">SHARE YOUR CODE</div>
+        <div class="share-tabs">
+          <button class="tab-btn" id="tab-li" onclick="setTab('linkedin')">LinkedIn</button>
+          <button class="tab-btn" id="tab-x" onclick="setTab('x')">X / Twitter</button>
+        </div>
+        <div class="share-preview" id="share-preview"></div>
+        <button class="btn-copy" id="btn-copy" onclick="copyShare()">⧉  テキストをコピー</button>
+      </div>
+      <button class="btn-retry" onclick="resetApp()">RETRY DIAGNOSIS</button>
+    </div>
+  </div>
+  <p class="footer">© HUMANCODE LAB — COGNITIVE TENSE SYSTEM</p>
+</div>
+<script>
+const questions=[{id:1,text:"新しいビジネスアイデアが浮かんだ。まず何をする？",options:[{label:"「3年後どうなってるか」を想像してワクワクする",type:"future"},{label:"とりあえず今日中に誰かに話してみる",type:"present"},{label:"似たような事例を調べて、成功パターンを確認する",type:"past"}]},{id:2,text:"初対面の人と会うとき、まず気になるのは？",options:[{label:"この人と将来どんなことができるか",type:"future"},{label:"今この瞬間の空気感・エネルギー",type:"present"},{label:"どんな経歴・背景を持っているか",type:"past"}]},{id:3,text:"失敗したとき、最初にすることは？",options:[{label:"次はどう改善するかのプランを立てる",type:"future"},{label:"気持ちを切り替えてすぐ次の行動に移る",type:"present"},{label:"なぜ失敗したか原因を丁寧に振り返る",type:"past"}]},{id:4,text:"旅行に行くなら？",options:[{label:"まだ行ったことのない未知の場所",type:"future"},{label:"行き当たりばったりで気分で決める",type:"present"},{label:"昔よかった場所にまた行く",type:"past"}]},{id:5,text:"会議で一番モヤモヤするのは？",options:[{label:"具体論ばかりで「で、最終的にどこへ向かうの？」となる",type:"future"},{label:"理屈が多くて「もう動こうよ」と思う",type:"present"},{label:"前回の経緯を無視した議論が始まったとき",type:"past"}]},{id:6,text:"自分の一番の強みは？",options:[{label:"まだないものを構想できる想像力",type:"future"},{label:"その場の変化に即対応できる適応力",type:"present"},{label:"積み上げてきた経験と人への共感力",type:"past"}]},{id:7,text:"好きなコンテンツのジャンルは？",options:[{label:"SF・テクノロジー・未来予測",type:"future"},{label:"ドキュメンタリー・リアリティ・ライブ系",type:"present"},{label:"歴史・回顧録・インタビュー・人間ドラマ",type:"past"}]}];
+const results={future:{type:"未来志向型",code:"FUTURE",icon:"◈",color:"#00e5ff",glow:"rgba(0,229,255,0.4)",rgb:"0,229,255",brain:"前頭葉優位 / 理性系",tagline:"まだ存在しない世界を設計する人",strength:"ビジョン設計・戦略立案・抽象思考が得意。「なぜやるか」を語ることで人を動かす力がある。",advice:"「5年後の店像」を先に語れ。スタッフもお客も、未来のストーリーで動く。あなたのビジョンが最大の集客コンテンツになる。"},present:{type:"現在志向型",code:"PRESENT",icon:"◉",color:"#ff6b35",glow:"rgba(255,107,53,0.4)",rgb:"255,107,53",brain:"扁桃体優位 / 本能系",tagline:"今この瞬間に全力を注ぐ人",strength:"即断即決・現場対応力・ライブ感が武器。空気を読んでその場を最適化する天才。",advice:"「今日だけ」の体験設計が最大の差別化。限定イベント・サプライズ演出でリピーターの感情を揺さぶれ。"},past:{type:"過去志向型",code:"PAST",icon:"◎",color:"#a78bfa",glow:"rgba(167,139,250,0.4)",rgb:"167,139,250",brain:"海馬・側頭葉 / 感情系",tagline:"経験と文脈で信頼を築く人",strength:"深い共感力・文脈理解・信頼構築が得意。「なぜあなたを信じるか」を自然に示せる。",advice:"「うちの歴史」をコンテンツにせよ。積み上げた物語が常連を伝道師に変える。口コミの本質はデータではなく感情的文脈だ。"}};
+function svgFuture(){return`<svg viewBox="0 0 160 180" width="160" height="180" style="display:block;margin:0 auto;animation:charReveal .7s cubic-bezier(.22,1,.36,1) both"><defs><radialGradient id="fg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00e5ff" stop-opacity=".25"/><stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/></radialGradient></defs><ellipse cx="80" cy="95" rx="62" ry="70" fill="url(#fg)"/><rect x="70" y="128" width="20" height="18" rx="4" fill="#0d1a24"/><path d="M30 175 Q50 148 80 146 Q110 148 130 175 Z" fill="#0d1a24" stroke="#00e5ff" stroke-width="1" stroke-opacity=".4"/><rect x="42" y="52" width="76" height="82" rx="22" fill="#0a1520"/><rect x="42" y="52" width="76" height="82" rx="22" fill="none" stroke="#00e5ff" stroke-width="1.2" stroke-opacity=".6"/><rect x="54" y="56" width="52" height="12" rx="4" fill="#0d2030" stroke="#00e5ff" stroke-width=".6" stroke-opacity=".4"/><rect x="58" y="59" width="8" height="6" rx="2" fill="#00e5ff" fill-opacity=".5"/><rect x="70" y="60" width="14" height="4" rx="1" fill="#00e5ff" fill-opacity=".2"/><rect x="88" y="60" width="6" height="4" rx="1" fill="#00e5ff" fill-opacity=".3"/><rect x="52" y="80" width="24" height="14" rx="4" fill="#061018" stroke="#00e5ff" stroke-width="1"/><rect x="61" y="85" width="6" height="4" rx="1" fill="#00e5ff"/><rect x="63" y="86" width="2" height="2" fill="white" fill-opacity=".9"/><rect x="84" y="80" width="24" height="14" rx="4" fill="#061018" stroke="#00e5ff" stroke-width="1"/><rect x="93" y="85" width="6" height="4" rx="1" fill="#00e5ff"/><rect x="95" y="86" width="2" height="2" fill="white" fill-opacity=".9"/><path d="M76 100 L80 107 L84 100" stroke="#00e5ff" stroke-width="1" stroke-opacity=".5" fill="none" stroke-linecap="round"/><rect x="62" y="115" width="36" height="3" rx="1.5" fill="#00e5ff" fill-opacity=".5"/><circle cx="43" cy="88" r="6" fill="#061018" stroke="#00e5ff" stroke-width="1"/><circle cx="43" cy="88" r="3" fill="#00e5ff" fill-opacity=".6"/><circle cx="117" cy="88" r="6" fill="#061018" stroke="#00e5ff" stroke-width="1"/><circle cx="117" cy="88" r="3" fill="#00e5ff" fill-opacity=".6"/><rect x="34" y="82" width="8" height="18" rx="3" fill="#0d1a24" stroke="#00e5ff" stroke-width=".8" stroke-opacity=".5"/><rect x="118" y="82" width="8" height="18" rx="3" fill="#0d1a24" stroke="#00e5ff" stroke-width=".8" stroke-opacity=".5"/></svg>`}
+function svgPresent(){return`<svg viewBox="0 0 160 180" width="160" height="180" style="display:block;margin:0 auto;animation:charReveal .7s cubic-bezier(.22,1,.36,1) both"><defs><radialGradient id="pg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff6b35" stop-opacity=".22"/><stop offset="100%" stop-color="#ff6b35" stop-opacity="0"/></radialGradient></defs><ellipse cx="80" cy="95" rx="62" ry="70" fill="url(#pg)"/><rect x="69" y="126" width="22" height="20" rx="5" fill="#1a1008"/><path d="M25 178 Q52 150 80 148 Q108 150 135 178 Z" fill="#1a1008" stroke="#ff6b35" stroke-width="1" stroke-opacity=".4"/><ellipse cx="80" cy="90" rx="38" ry="42" fill="#1a1008"/><ellipse cx="80" cy="90" rx="38" ry="42" fill="none" stroke="#ff6b35" stroke-width="1.2" stroke-opacity=".55"/><path d="M50 72 L44 48 L58 65 L62 42 L70 62 L80 38 L90 62 L98 42 L102 65 L116 48 L110 72" fill="#1a1008" stroke="#ff6b35" stroke-width="1.5" stroke-linejoin="round" stroke-opacity=".8"/><path d="M52 76 Q62 70 70 74" stroke="#ff6b35" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-opacity=".9"/><path d="M90 74 Q98 70 108 76" stroke="#ff6b35" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-opacity=".9"/><ellipse cx="63" cy="86" rx="10" ry="11" fill="#0e0804" stroke="#ff6b35" stroke-width="1.2"/><ellipse cx="63" cy="86" rx="5" ry="5.5" fill="#ff6b35" fill-opacity=".8"/><circle cx="65" cy="83" r="1.5" fill="white" fill-opacity=".9"/><ellipse cx="97" cy="86" rx="10" ry="11" fill="#0e0804" stroke="#ff6b35" stroke-width="1.2"/><ellipse cx="97" cy="86" rx="5" ry="5.5" fill="#ff6b35" fill-opacity=".8"/><circle cx="99" cy="83" r="1.5" fill="white" fill-opacity=".9"/><path d="M76 98 Q80 105 84 98" stroke="#ff6b35" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-opacity=".5"/><path d="M58 112 Q80 128 102 112" stroke="#ff6b35" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-opacity=".9"/><ellipse cx="52" cy="100" rx="7" ry="4" fill="#ff6b35" fill-opacity=".2"/><ellipse cx="108" cy="100" rx="7" ry="4" fill="#ff6b35" fill-opacity=".2"/><ellipse cx="42" cy="89" rx="6" ry="10" fill="#1a1008" stroke="#ff6b35" stroke-width="1" stroke-opacity=".5"/><ellipse cx="118" cy="89" rx="6" ry="10" fill="#1a1008" stroke="#ff6b35" stroke-width="1" stroke-opacity=".5"/></svg>`}
+function svgPast(){return`<svg viewBox="0 0 160 180" width="160" height="180" style="display:block;margin:0 auto;animation:charReveal .7s cubic-bezier(.22,1,.36,1) both"><defs><radialGradient id="lag" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#a78bfa" stop-opacity=".2"/><stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/></radialGradient></defs><ellipse cx="80" cy="95" rx="62" ry="70" fill="url(#lag)"/><rect x="69" y="126" width="22" height="20" rx="5" fill="#100d1a"/><path d="M28 178 Q54 152 80 150 Q106 152 132 178 Z" fill="#100d1a" stroke="#a78bfa" stroke-width="1" stroke-opacity=".4"/><path d="M68 150 Q80 144 92 150" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-opacity=".6"/><circle cx="80" cy="145" r="3" fill="#a78bfa" fill-opacity=".5"/><ellipse cx="80" cy="89" rx="40" ry="43" fill="#100d1a"/><ellipse cx="80" cy="89" rx="40" ry="43" fill="none" stroke="#a78bfa" stroke-width="1.2" stroke-opacity=".5"/><path d="M40 78 Q42 46 80 42 Q118 46 120 78" fill="#100d1a" stroke="#a78bfa" stroke-width="1.2" stroke-opacity=".6"/><path d="M40 78 Q44 56 80 52 Q116 56 120 78" fill="#1a1428" stroke="none"/><path d="M52 75 Q62 73 70 75" stroke="#a78bfa" stroke-width="2" fill="none" stroke-linecap="round" stroke-opacity=".8"/><path d="M90 75 Q98 73 108 75" stroke="#a78bfa" stroke-width="2" fill="none" stroke-linecap="round" stroke-opacity=".8"/><ellipse cx="63" cy="87" rx="11" ry="10" fill="#080610" stroke="#a78bfa" stroke-width="1.1"/><path d="M52 84 Q63 80 74 84" fill="#100d1a"/><ellipse cx="63" cy="88" rx="4.5" ry="4.5" fill="#a78bfa" fill-opacity=".7"/><circle cx="65" cy="86" r="1.5" fill="white" fill-opacity=".85"/><ellipse cx="97" cy="87" rx="11" ry="10" fill="#080610" stroke="#a78bfa" stroke-width="1.1"/><path d="M86 84 Q97 80 108 84" fill="#100d1a"/><ellipse cx="97" cy="88" rx="4.5" ry="4.5" fill="#a78bfa" fill-opacity=".7"/><circle cx="99" cy="86" r="1.5" fill="white" fill-opacity=".85"/><path d="M77 100 L80 107 L83 100" stroke="#a78bfa" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-opacity=".45"/><path d="M64 116 Q80 122 96 116" stroke="#a78bfa" stroke-width="2" fill="none" stroke-linecap="round" stroke-opacity=".8"/><ellipse cx="40" cy="88" rx="7" ry="11" fill="#100d1a" stroke="#a78bfa" stroke-width="1" stroke-opacity=".45"/><ellipse cx="120" cy="88" rx="7" ry="11" fill="#100d1a" stroke="#a78bfa" stroke-width="1" stroke-opacity=".45"/><circle cx="24" cy="72" r="4" fill="none" stroke="#a78bfa" stroke-width=".8" stroke-opacity=".4" style="animation:pulse 3s ease-in-out infinite"/><circle cx="24" cy="72" r="2" fill="#a78bfa" fill-opacity=".3" style="animation:pulse 3s ease-in-out infinite"/><circle cx="136" cy="68" r="3" fill="none" stroke="#a78bfa" stroke-width=".8" stroke-opacity=".35" style="animation:pulse 3.5s ease-in-out infinite .5s"/><circle cx="136" cy="68" r="1.5" fill="#a78bfa" fill-opacity=".25" style="animation:pulse 3.5s ease-in-out infinite .5s"/></svg>`}
+let currentQ=0,scores={future:0,present:0,past:0},shareMode='linkedin',shareTexts={},typewriterTimer=null;
+(function(){const c=document.getElementById('particles'),colors=['#00e5ff','#a78bfa','#ff6b35'];for(let i=0;i<24;i++){const d=document.createElement('div');d.className='particle';const s=i%3===0?'2px':'1px';d.style.cssText=`width:${s};height:${s};background:${colors[i%3]};left:${(i*4.1+2)%100}%;top:${(i*7.3+5)%100}%;opacity:${0.3+(i%5)*0.1};animation:float ${4+(i%4)}s ease-in-out infinite;animation-delay:${(i*0.3)%3}s;`;c.appendChild(d)}})();
+function typewrite(el,text,speed,cb){clearInterval(typewriterTimer);el.textContent='';let i=0;typewriterTimer=setInterval(()=>{i++;el.textContent=text.slice(0,i);if(i>=text.length){clearInterval(typewriterTimer);if(cb)cb();}},speed);}
+function show(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function startQuiz(){currentQ=0;scores={future:0,present:0,past:0};show('sec-quiz');renderQuestion();}
+function renderQuestion(){const q=questions[currentQ];const total=questions.length;const pct=Math.round((currentQ/total)*100);document.getElementById('seq-label').textContent=`SEQUENCE_${String(currentQ+1).padStart(2,'0')}`;document.getElementById('pct-label').textContent=pct+'%';document.getElementById('progress-fill').style.width=pct+'%';const qEl=document.getElementById('q-text');qEl.innerHTML='';const span=document.createElement('span');const cursor=document.createElement('span');cursor.className='cursor';cursor.textContent='_';qEl.appendChild(span);qEl.appendChild(cursor);typewrite(span,q.text,22);const colors={future:'#00e5ff',present:'#ff6b35',past:'#a78bfa'};const rgbs={future:'0,229,255',present:'255,107,53',past:'167,139,250'};const optEl=document.getElementById('options');optEl.innerHTML='';q.options.forEach((opt,i)=>{const btn=document.createElement('button');btn.className='opt-btn';btn.innerHTML=`<span class="opt-circle">${String.fromCharCode(65+i)}</span>${opt.label}`;const c=colors[opt.type];const rgb=rgbs[opt.type];btn.addEventListener('mouseenter',()=>{btn.style.borderColor=c+'44';btn.style.color='#e2e8f0';btn.style.background='rgba(255,255,255,.05)';});btn.addEventListener('mouseleave',()=>{if(!btn.dataset.selected){btn.style.borderColor='rgba(255,255,255,.08)';btn.style.color='#94a3b8';btn.style.background='rgba(255,255,255,.03)';}});btn.addEventListener('click',()=>{btn.dataset.selected='1';btn.style.background=`rgba(${rgb},.12)`;btn.style.borderColor=c;btn.style.color=c;btn.querySelector('.opt-circle').textContent='●';btn.querySelector('.opt-circle').style.borderColor=c;btn.querySelector('.opt-circle').style.color=c;optEl.querySelectorAll('.opt-btn').forEach(b=>b.style.pointerEvents='none');scores[opt.type]++;setTimeout(()=>{currentQ++;if(currentQ>=questions.length)showResult();else renderQuestion();},400);});optEl.appendChild(btn);});}
+function showResult(){const entries=Object.entries(scores).sort((a,b)=>b[1]-a[1]);const topType=entries[0][0];const r=results[topType];const total=Object.values(scores).reduce((a,b)=>a+b,0);const pct=v=>Math.round((v/total)*100);const charWrap=document.getElementById('char-wrap');charWrap.style.background=`radial-gradient(ellipse at center,rgba(${r.rgb},.08) 0%,transparent 70%)`;charWrap.style.border=`1px solid rgba(${r.rgb},.12)`;const charSVGs={future:svgFuture,present:svgPresent,past:svgPast};document.getElementById('char-svg').innerHTML=charSVGs[topType]();const badge=document.getElementById('char-badge');badge.textContent=`${r.code} · ${r.brain}`;badge.style.background=`rgba(${r.rgb},.15)`;badge.style.border=`1px solid rgba(${r.rgb},.4)`;badge.style.color=r.color;document.getElementById('r-icon').textContent=r.icon;document.getElementById('r-icon').style.color=r.color;document.getElementById('r-type').textContent=r.type;const tagEl=document.getElementById('r-tagline');tagEl.style.color=r.color;tagEl.textContent='';const barsEl=document.getElementById('bars');barsEl.innerHTML='';[['future','未来志向','#00e5ff'],['present','現在志向','#ff6b35'],['past','過去志向','#a78bfa']].forEach(([key,label,color])=>{const w=(scores[key]/total)*100;barsEl.innerHTML+=`<div class="bar-row"><div class="bar-meta"><span class="bar-name">${label}</span><span class="bar-score" style="color:${color}">${scores[key]}/${total}</span></div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color};box-shadow:0 0 6px ${color}"></div></div></div>`;});const sp=document.getElementById('strength-panel');sp.style.background=`rgba(${r.rgb},.05)`;sp.style.border=`1px solid ${r.color}22`;document.getElementById('strength-label').style.color=r.color;document.getElementById('strength-text').textContent=r.strength;document.getElementById('advice-bar').style.background=r.color;document.getElementById('advice-bar').style.boxShadow=`0 0 8px ${r.glow}`;document.getElementById('advice-text').textContent=r.advice;shareTexts={linkedin:`【思考の時制 診断結果】\n\n私は「${r.type}」でした。\n${r.icon} ${r.tagline}\n\n◆ 認知プロファイル\n未来志向 ${pct(scores.future)}% ／ 現在志向 ${pct(scores.present)}% ／ 過去志向 ${pct(scores.past)}%\n\n◆ 強み\n${r.strength}\n\n◆ 実店舗へのアドバイス\n${r.advice}\n\n#HumanCode #思考の時制 #認知特性 #ビジネス思考`,x:`【思考の時制診断】\n私は「${r.type}」${r.icon}\n${r.tagline}\n\n未来${pct(scores.future)}% 現在${pct(scores.present)}% 過去${pct(scores.past)}%\n\nあなたは？ #HumanCode #思考の時制`};setTab('linkedin');show('sec-result');setTimeout(()=>typewrite(tagEl,r.tagline,40),400);}
+function setTab(mode){shareMode=mode;const entries=Object.entries(scores).sort((a,b)=>b[1]-a[1]);const r=results[entries[0][0]];['linkedin','x'].forEach(k=>{const btn=document.getElementById('tab-'+(k==='linkedin'?'li':'x'));if(k===mode){btn.style.border=`1px solid ${r.color}`;btn.style.background=`rgba(${r.rgb},.1)`;btn.style.color=r.color;}else{btn.style.border='1px solid rgba(255,255,255,.1)';btn.style.background='transparent';btn.style.color='#4a5568';}});document.getElementById('share-preview').textContent=shareTexts[mode];const copyBtn=document.getElementById('btn-copy');copyBtn.style.background=`rgba(${r.rgb},.1)`;copyBtn.style.border=`1px solid ${r.color}`;copyBtn.style.color=r.color;copyBtn.style.boxShadow=`0 0 12px ${r.glow}`;}
+function copyShare(){const entries=Object.entries(scores).sort((a,b)=>b[1]-a[1]);const r=results[entries[0][0]];const btn=document.getElementById('btn-copy');const text=shareTexts[shareMode];const done=()=>{btn.textContent='✓  COPIED!';btn.style.background='rgba(34,197,94,.12)';btn.style.border='1px solid #22c55e';btn.style.color='#22c55e';btn.style.boxShadow='0 0 16px rgba(34,197,94,.2)';setTimeout(()=>{btn.textContent='⧉  テキストをコピー';btn.style.background=`rgba(${r.rgb},.1)`;btn.style.border=`1px solid ${r.color}`;btn.style.color=r.color;btn.style.boxShadow=`0 0 12px ${r.glow}`;},2000);};if(navigator.clipboard){navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));}else{fallbackCopy(text,done);}}
+function fallbackCopy(text,cb){const el=document.createElement('textarea');el.value=text;el.style.cssText='position:fixed;opacity:0';document.body.appendChild(el);el.focus();el.select();document.execCommand('copy');document.body.removeChild(el);cb();}
+function resetApp(){currentQ=0;scores={future:0,present:0,past:0};show('sec-intro');}
+</script>
+</body>
+</html>
